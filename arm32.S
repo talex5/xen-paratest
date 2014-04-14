@@ -22,15 +22,15 @@ _start:
 reset:
 	@ Initialize ACTLR core register
 	@ (what does this do?)
+	/*
 	mrc p15, 0, r0, c1, c0, 1
 	orr r0, r0, #1 << 6
 	mcr p15, 0, r0, c1, c0, 1
-
-	@ Save dtb pointer passed by the hypervisor
-	mov	r4, r2
+	*/
 
 	@ Reset sequence from "Example 13-3 Setting up caches, MMU and branch predictors"
 
+	/*
 	@ Disable MMU
 	MRC p15, 0, r1, c1, c0, 0		@ Read Control Register configuration data
 	BIC r1, r1, #0x1
@@ -46,11 +46,13 @@ reset:
 	@ Invalidate Instruction cache
 	MOV r1, #0
 	MCR p15, 0, r1, c7, c5, 0
+	*/
 
 	@ Invalidate Data cache
 	@ to make the code general purpose, we calculate the
 	@ cache size first and loop through each set + way
 	MRC p15, 1, r0, c0, c0, 0
+
 	LDR r3, =0x1ff
 	AND r0, r3, r0, LSR #13
 	MOV r1, #0
@@ -66,6 +68,6 @@ set_loop:
 	ADD r1, r1, #1
 	CMP r1, #4
 
-	BNE way_loop 			@ if not, iterate way_loop
+	@ BNE way_loop 			@ if not, iterate way_loop
 
 	b	.
