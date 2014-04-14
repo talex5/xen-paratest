@@ -39,6 +39,7 @@ reset:
 	@ Save dtb pointer passed by the hypervisor
 	mov	r4, r2
 
+/*
 	@ Reset sequence from "Example 13-3 Setting up caches, MMU and branch predictors"
 
 	@ Disable MMU
@@ -77,6 +78,7 @@ set_loop:
 	CMP r1, #4
 
 	BNE way_loop 			@ if not, iterate way_loop
+	*/
 
 	/*
 	@ Invalidate TLB
