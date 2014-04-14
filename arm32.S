@@ -46,7 +46,6 @@ reset:
 	BIC r1, r1, #0x1
 	MCR p15, 0, r1, c1, c0, 0		@ Write Control Register configuration data
 
-/*
 	@ Disable L1 Caches
 	MRC p15, 0, r1, c1, c0, 0		@ Read Control Register configuration data
 	BIC r1, r1, #(0x1 << 12)		@ Disable I Cache
@@ -78,7 +77,6 @@ set_loop:
 	CMP r1, #4
 
 	BNE way_loop 			@ if not, iterate way_loop
-	*/
 
 	@ Display banner
 	mov r0, #0		@ write
@@ -88,12 +86,3 @@ set_loop:
         __HVC(XEN_IMM)
 
 	b	.
-
-
-.pushsection .data
-.align	14	@ Page table must be aligned to a 16 KB boundary.
-page_dir:
-	@ This is the (short-descriptor format) first-level translation table.
-	@ Each 4-byte entry describes one 1 MB region of the 4 GB address space.
-	.fill (4*1024), 4, 0x0
-.popsection
