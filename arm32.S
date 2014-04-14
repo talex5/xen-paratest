@@ -20,7 +20,13 @@ _start:
 reset:
 	@ Fill in the top-level translation table (at page_dir). Based on Mini-OS code.
 	@ Populate the whole pagedir with 1MB section descriptors.
-	ldr	r0, =(0x2 + (3 << 10) + (1 << 16) + (1<<19)) @ section entry + read/write + sharable + non-secure.
+	@ TEX[2:0] C B = 001 1 1 (outer and inner write-back, write-allocate)
+	ldr	r0, =(0x2 +  		/* Section entry */ \
+		      0xc +  		/* C B */ \
+		      (3 << 10) + 	/* Read/write */ \
+		      (1 << 12) +	/* TEX */ \
+		      (1 << 16) +	/* Sharable */ \
+		      (1<<19))		/* Non-secure */
 	ldr	r1, =page_dir
 	add	r2, r1, #(4*4*1024) 	@ Limit (4 GB address space, 4 byte entries)
 
