@@ -78,6 +78,7 @@ set_loop:
 
 	BNE way_loop 			@ if not, iterate way_loop
 
+	/*
 	@ Invalidate TLB
 	MCR p15, 0, r1, c8, c7, 0
 
@@ -124,6 +125,7 @@ set_loop:
 	orr	r1, r1, #3 << 11	@ (icache, branch prediction)
 	mcr	p15, 0, r1, c1, c0, 0	@ write sctlr
 	isb
+	*/
 
 	@ set VBAR = exception_vector_table
 	@ SCTLR.V = 0
@@ -137,19 +139,10 @@ set_loop:
         mov r12, #__HYPERVISOR_console_io
         __HVC(XEN_IMM)
 
-
-@ load stack
-	ldr	sp, =stack
-	add	sp, sp, #(4*4*1024)
-
 	b	.
 
 
 .pushsection .data
-.align 13
-.globl stack
-stack:
-	.fill (4*1024), 4, 0x0
 .align 13
 irqstack:
 	.fill (1024), 4, 0x0
