@@ -1,10 +1,3 @@
-#define __HVC(imm16) .long ((0xE1400070 | (((imm16) & 0xFFF0) << 4) | ((imm16) & 0x000F)) & 0xFFFFFFFF)
-#define XEN_IMM 0xEA1
-#define __HYPERVISOR_console_io           18
-
-#define MMU_ENABLE    (1 << 0)
-#define DCACHE_ENABLE (1 << 2)
-
 .section .text
 
 .globl _start
@@ -18,9 +11,6 @@ _start:
         .word   _start		@ absolute load/run zImage address
         .word   _end - _start   @ zImage size
 	@ end of zImage header
-greeting:
-	.string "paratest/arm32 starting...\n"
-greeting_end:
 .align 4
 
 @ Called at startup. Reset the CPU to a sane state, then call main.
@@ -77,12 +67,5 @@ set_loop:
 	CMP r1, #4
 
 	BNE way_loop 			@ if not, iterate way_loop
-
-	@ Display banner
-	mov r0, #0		@ write
-	mov r1, #greeting_end - greeting
-	adr r2, greeting
-        mov r12, #__HYPERVISOR_console_io
-        __HVC(XEN_IMM)
 
 	b	.
