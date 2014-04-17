@@ -13,4 +13,5 @@ paratest.img: arm32.o paratest.lds
 
 test: paratest.img
 	scp paratest.img root@linaro-developer:
-	ssh root@linaro-developer "xl destroy paratest; xl create paratest.cfg; sleep 1; xl destroy paratest"
+	#ssh root@linaro-developer "xl destroy paratest; xl create paratest.cfg; sleep 1; xl destroy paratest"
+	ssh root@linaro-developer "xl destroy paratest; xl create -c paratest.cfg"

@@ -1,6 +1,16 @@
 #define __HVC(imm16) .long ((0xE1400070 | (((imm16) & 0xFFF0) << 4) | ((imm16) & 0x000F)) & 0xFFFFFFFF)
 #define XEN_IMM 0xEA1
 #define __HYPERVISOR_console_io           18
+#define __HYPERVISOR_hvm_op               34
+#define DOMID_SELF 0x7FF0
+
+#define HVMOP_get_param           1
+
+#define EVTCHNOP_send		  4
+
+#define HVM_PARAM_CONSOLE_PFN    17
+#define HVM_PARAM_CONSOLE_EVTCHN 18
+
 
 .section .text
 
@@ -80,7 +90,53 @@ reset:
         mov	r12, #__HYPERVISOR_console_io
         __HVC(XEN_IMM)
 
-	b	.
+	ldr	r5, =scratch
+	@ Get normal console details
+	ldr	r2, =DOMID_SELF
+	str	r2, [r5]
+	mov	r2, #HVM_PARAM_CONSOLE_EVTCHN
+	str	r2, [r5, #4]
+	mov	r0, #HVMOP_get_param
+	mov	r1, r5
+	mov	r12, #__HYPERVISOR_hvm_op
+	__HVC(XEN_IMM)
+	ldr	r6, [r5, #8]			@ r6 = event channel ID
+
+	mov	r2, #HVM_PARAM_CONSOLE_PFN
+	str	r2, [r5, #4]
+	mov	r0, #HVMOP_get_param
+	mov	r1, r5
+	mov	r12, #__HYPERVISOR_hvm_op
+	__HVC(XEN_IMM)
+	ldr	r7, [r5, #8]			@ r7 = console machine page number
+
+	mov	r3, r7, lsl#12			@ r3 -> xencons_interface
+	add	r3, r3, #1024			@ r3 -> out buffer
+
+	@ Copy message to ring buffer
+	ldr	r1, =message
+	mov	r2, #message_end - message - 1
+1:
+	ldrb	r0, [r1, r2]
+	strb	r0, [r3, r2]
+	subs	r2, r2, #1
+	bge	1b
+
+	@ Update out_prod
+	dmb
+	mov	r2, #message_end - message
+	str	r2, [r3, #2048 + 12]
+
+	@ Notify dom0 of update
+	mov	r0, r6
+	str	r0, [r5]
+	mov	r0, r5
+	mov	r12, #EVTCHNOP_send
+	__HVC(XEN_IMM)
+
+1:
+	wfi
+	b	1b
 
 .pushsection .data
 .align	14	@ Page table must be aligned to a 16 KB boundary.
@@ -89,6 +145,12 @@ page_dir:
 	@ Each 4-byte entry describes one 1 MB region of the 4 GB address space.
 	.fill (4*1024), 4, 0x0
 
+.align  2
+scratch:
+	.fill 1024, 4, 0x0
+message:
+	.ascii "Hello console\r\n"
+message_end:
 .align	6
 buffer:
 	.string "012\n456789abcdefB123456789abcdefC123456789abcdefD123456789a" @ 60 bytes
