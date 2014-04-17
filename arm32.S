@@ -1,7 +1,10 @@
 #define __HVC(imm16) .long ((0xE1400070 | (((imm16) & 0xFFF0) << 4) | ((imm16) & 0x000F)) & 0xFFFFFFFF)
 #define XEN_IMM 0xEA1
+
 #define __HYPERVISOR_console_io           18
+#define __HYPERVISOR_sched_op             29
 #define __HYPERVISOR_hvm_op               34
+
 #define DOMID_SELF 0x7FF0
 
 #define HVMOP_get_param           1
@@ -11,6 +14,8 @@
 #define HVM_PARAM_CONSOLE_PFN    17
 #define HVM_PARAM_CONSOLE_EVTCHN 18
 
+#define SCHEDOP_shutdown    2
+#define SHUTDOWN_poweroff   0
 
 .section .text
 
@@ -134,6 +139,26 @@ reset:
 	mov	r12, #EVTCHNOP_send
 	__HVC(XEN_IMM)
 
+	@ Wait for console input
+1:
+	ldr	r0, [r3, #2048 + 4]
+	cmp	r0, #0
+	beq	1b
+
+	@ Power off
+	mov	r0, #SHUTDOWN_poweroff
+	str	r0, [r5]
+	mov	r0, #SCHEDOP_shutdown
+	mov	r1, r5
+	mov	r12, #__HYPERVISOR_sched_op
+	__HVC(XEN_IMM)
+
+	@ Shouldn't get here?
+	mov	r0, #0
+	mov	r1, #buffer_end2 - buffer2
+	ldr	r2, =buffer2
+        mov	r12, #__HYPERVISOR_console_io
+        __HVC(XEN_IMM)
 1:
 	wfi
 	b	1b
